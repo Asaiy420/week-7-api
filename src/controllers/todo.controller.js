@@ -12,11 +12,11 @@ export const getTodos = (req, res) => {
 };
 
 export const addTodos = (req, res) => {
-  const { title, description, hasCompleted } = req.body;
+  const { title, description, dueDate, hasCompleted = false } = req.body;
 
   try {
-    if (!title || !description || hasCompleted === undefined) {
-      res
+    if (!title || !description || !dueDate) {
+      return res
         .status(400)
         .json({ message: "Please provide all the required fields." });
     }
@@ -26,6 +26,7 @@ export const addTodos = (req, res) => {
       title,
       description,
       hasCompleted,
+      dueDate,
     };
 
     todo.push(newTodo);
@@ -44,7 +45,7 @@ export const addTodos = (req, res) => {
 
 export const updateTodo = (req, res) => {
   const { todoId } = req.params;
-  const { title, description, hasCompleted } = req.body;
+  const { title, description, hasCompleted, dueDate } = req.body;
 
   try {
     // Finds the todo id
@@ -58,6 +59,7 @@ export const updateTodo = (req, res) => {
     if (title !== undefined) todo[index].title = title;
     if (description !== undefined) todo[index].description = description;
     if (hasCompleted !== undefined) todo[index].hasCompleted = hasCompleted;
+    if (dueDate !== undefined) todo[index].dueDate = dueDate;
 
     res.status(200).json({
       message: "Todo updated successfully",
