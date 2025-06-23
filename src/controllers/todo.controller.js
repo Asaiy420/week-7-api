@@ -1,17 +1,26 @@
-const todo = [];
+import Todo from "../models/todo.model";
 
-let todoId = 0;
+export const getTodos = async (req, res) => {
+  try {
+    const response = await Todo.find({});
 
-export const getTodos = (req, res) => {
-  res.status(200).json({
-    message: "Todos retrieved successfully",
-    data: {
-      todo,
-    },
-  });
+    if (!response) {
+      return res.status(404).json({ message: "No todos found" });
+    }
+
+    return res.status(200).json({
+      message: "Todos retrieved successfully",
+      data: {
+        todo: response,
+      },
+    });
+  } catch (error) {
+    console.error("Error when retrieving todos", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
 };
 
-export const addTodos = (req, res) => {
+export const addTodos = async (req, res) => {
   const { title, description, dueDate, hasCompleted = false } = req.body;
 
   try {
@@ -20,52 +29,47 @@ export const addTodos = (req, res) => {
         .status(400)
         .json({ message: "Please provide all the required fields." });
     }
-    todoId++;
-    const newTodo = {
-      todoId,
+
+    const newTodo = new Todo.create({
       title,
       description,
-      hasCompleted,
       dueDate,
-    };
+      hasCompleted,
+    });
 
-    todo.push(newTodo);
-
-    res.status(201).json({
-      message: "Todo added successfully",
+    return res.status(201).json({
+      message: "Todo created successfully",
       data: {
-        todo,
+        todo: newTodo,
       },
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error when creating a todo", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
 
-export const updateTodo = (req, res) => {
+export const updateTodo = async (req, res) => {
   const { todoId } = req.params;
-  const { title, description, hasCompleted, dueDate } = req.body;
+  const { title, description, dueDate } = req.body;
 
   try {
-    // Finds the todo id
-    const index = todo.findIndex((t) => t.todoId === Number(todoId));
-
-    if (index === -1) {
+    // Check if the todo exists
+    const todo = await Todo.findById(todoId);
+    if (!todo) {
       return res.status(404).json({ message: "Todo not found" });
     }
 
-    // Update the fields if provided, otherwise keep existing
-    if (title !== undefined) todo[index].title = title;
-    if (description !== undefined) todo[index].description = description;
-    if (hasCompleted !== undefined) todo[index].hasCompleted = hasCompleted;
-    if (dueDate !== undefined) todo[index].dueDate = dueDate;
+    // Update the todo
+    todo.title = title !== undefined ? title : todo.title;
+    todo.description =
+      description !== undefined ? description : todo.description;
+    todo.dueDate = dueDate !== undefined ? dueDate : todo.dueDate;
+    await todo.save();
 
-    res.status(200).json({
+    return res.status(200).json({
       message: "Todo updated successfully",
-      data: {
-        todo,
-      },
+      data: { todo },
     });
   } catch (error) {
     console.error("Error when updating todos", error);
@@ -73,7 +77,7 @@ export const updateTodo = (req, res) => {
   }
 };
 
-export const deleteTodo = (req, res) => {
+export const deleteTodo = async (req, res) => {
   const { todoId } = req.params;
 
   try {
@@ -81,20 +85,13 @@ export const deleteTodo = (req, res) => {
       return res.status(400).json({ message: "Please provide a todoId" });
     }
 
-    const index = todo.findIndex((t) => t.todoId === Number(todoId));
-
-    if (index === -1) {
+    const todo = await Todo.findById(todoId);
+    if (!todo) {
       return res.status(404).json({ message: "Todo not found" });
     }
 
-    todo.splice(index, 1);
-
-    res.status(200).json({
-      message: "Todo deleted successfully",
-      data: {
-        todo,
-      },
-    });
+    await Todo.findByIdAndDelete(todoId);
+    return res.status(200).json({ message: "Todo deleted successfully" });
   } catch (error) {
     console.error("Error when deleting todos", error);
     return res.status(500).json({ message: "Internal server error" });
