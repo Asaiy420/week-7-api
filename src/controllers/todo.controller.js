@@ -21,7 +21,7 @@ export const getTodos = async (req, res) => {
 };
 
 export const addTodos = async (req, res) => {
-  const { title, description, dueDate, hasCompleted = false } = req.body;
+  const { title, description, dueDate } = req.body;
 
   try {
     if (!title || !description || !dueDate) {
@@ -30,11 +30,24 @@ export const addTodos = async (req, res) => {
         .json({ message: "Please provide all the required fields." });
     }
 
-    const newTodo = new Todo.create({
+    // Parse dueDate to a Date object
+    const parsedDueDate = new Date(dueDate);
+    if (isNaN(parsedDueDate.getTime())) {
+      return res.status(400).json({
+        message:
+          "Invalid dueDate format. Please use a valid date string (e.g., 2025-08-24 or 2025/08/24).",
+      });
+    }
+
+    // Generate a unique todoId (find max and increment)
+    const lastTodo = await Todo.findOne({}, {}, { sort: { todoId: -1 } });
+    const nextTodoId = lastTodo ? lastTodo.todoId + 1 : 1;
+
+    const newTodo = await Todo.create({
+      todoId: nextTodoId,
       title,
       description,
-      dueDate,
-      hasCompleted,
+      dueDate: parsedDueDate,
     });
 
     return res.status(201).json({
