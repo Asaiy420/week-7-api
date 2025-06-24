@@ -39,7 +39,7 @@ export const addTodos = async (req, res) => {
       });
     }
 
-    // Generate a unique todoId (find max and increment)
+    // Generates a unique todoId
     const lastTodo = await Todo.findOne({}, {}, { sort: { todoId: -1 } });
     const nextTodoId = lastTodo ? lastTodo.todoId + 1 : 1;
 
