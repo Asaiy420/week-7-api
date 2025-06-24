@@ -2,7 +2,7 @@ import Todo from "../models/todo.model.js";
 
 export const getTodos = async (req, res) => {
   try {
-    const response = await Todo.find({});
+    const response = await Todo.find({ userId: req.user.userId });
 
     if (!response) {
       return res.status(404).json({ message: "No todos found" });
@@ -21,10 +21,10 @@ export const getTodos = async (req, res) => {
 };
 
 export const addTodos = async (req, res) => {
-  const { title, description, dueDate } = req.body;
+  const { title, description, dueDate, userId } = req.body;
 
   try {
-    if (!title || !description || !dueDate) {
+    if (!title || !description || !dueDate || !userId) {
       return res
         .status(400)
         .json({ message: "Please provide all the required fields." });
@@ -48,6 +48,7 @@ export const addTodos = async (req, res) => {
       title,
       description,
       dueDate: parsedDueDate,
+      userId,
     });
 
     return res.status(201).json({

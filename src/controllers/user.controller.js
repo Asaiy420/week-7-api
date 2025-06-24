@@ -39,7 +39,7 @@ export const Register = async (req, res) => {
       data: {
         user: newUser,
       },
-    });
+    }); 
   } catch (error) {
     console.error("Error when creating a user", error);
     return res.status(500).json({ message: "Internal server error" });
